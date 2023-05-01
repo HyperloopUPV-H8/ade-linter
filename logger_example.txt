@@ -1,0 +1,32 @@
+Incorrect enum: enum(132,,23)
+Incorrect packet: general_data
+Incorrect board: LCU_MASTER
+
+[ERROR]     Incorrect enum: "enum(132,,23)"
+@Packet     general_data
+@Board      LCU_MASTER
+
+[ERROR]     Incorrect units: "A#fasdf/123"
+@Packet     general_data
+@Board      LCU_MASTER
+
+[ERROR]     Incorrect range: "[1231,,12332,]"
+@Packet     general_data
+@Board      LCU_MASTER
+
+[WARNING]   Incorrect range: "[1231,,12332,]"
+@Packet     general_data
+@Board      LCU_MASTER
+
+[ERROR]     Packet from structure not defined: "stick_down"
+@Structure  3rd structure: "stick_down"
+@Board      LCU_MASTER
+
+[ERROR]     Measurement from structure not defined: "current_1"
+@Structure  3rd structure: "stick_down"
+@Board      LCU_MASTER
+
+[ERROR]     Empty padding
+@Structure  2nd structure
+@Board      LCU_MASTER
+
