@@ -12,7 +12,7 @@ var (
 
 func checkMeasurements(table Table, logger Logger) bool {
 	measurements := getMeasurements(table, logger)
-	return Every(measurements)
+	return CheckAll(measurements)
 }
 
 func getMeasurements(table Table, logger Logger) []Test {
@@ -30,43 +30,44 @@ type Measurement struct {
 }
 
 func (m Measurement) Run() bool {
+	result := true
 
 	if m.cells[0] == "" {
 		m.logger.Error(fmt.Errorf("empty id"))
-		return false
+		result = false
 	}
 
 	if m.cells[1] == "" {
 		m.logger.Error(fmt.Errorf("empty name"))
-		return false
+		result = false
 	}
 
 	if !checkMeasurementType(m.cells[2]) {
 		m.logger.Error(fmt.Errorf("invalid type: %s", m.cells[2]))
-		return false
+		result = false
 	}
 
 	if !CheckMeasurementUnits(m.cells[3]) {
 		m.logger.Error(fmt.Errorf("invalid units: %s", m.cells[3]))
-		return false
+		result = false
 	}
 
 	if !CheckMeasurementUnits(m.cells[4]) {
 		m.logger.Error(fmt.Errorf("invalid units: %s", m.cells[4]))
-		return false
+		result = false
 	}
 
 	if !CheckRange(m.cells[5]) {
 		m.logger.Error(fmt.Errorf("invalid range: %s", m.cells[5]))
-		return false
+		result = false
 	}
 
 	if !CheckRange(m.cells[6]) {
 		m.logger.Error(fmt.Errorf("invalid range: %s", m.cells[6]))
-		return false
+		result = false
 	}
 
-	return true
+	return result
 }
 
 func checkMeasurementType(kind string) bool {

@@ -71,7 +71,7 @@ func findTableHeader(sheet Sheet, name string) (int, int) { // returns row, col
 }
 
 func getTableWithWidth(sheet Sheet, row int, col int, width int) Table {
-	colLength := getLongestColumnLength(sheet, row, col, width)
+	colLength := getLongestColumn(sheet, row, col, width)
 	return getSubmatrix(sheet, row, width, col, colLength)
 }
 
@@ -81,7 +81,7 @@ func getTableAutoSize(sheet Sheet, row int, column int) ([][]Cell, error) {
 	}
 
 	rowLength := getRowLength(sheet[row+1][column:])
-	columnLength := getLongestColumnLength(sheet, row+1, column, rowLength)
+	columnLength := getLongestColumn(sheet, row+1, column, rowLength)
 
 	return getSubmatrix(sheet, row+1, rowLength, column, columnLength), nil
 }
@@ -100,27 +100,20 @@ func getRowLength(row []Cell) int {
 	return len(row)
 }
 
-func getLongestColumnLength(sheet Sheet, row int, col int, nCols int) int {
-	max := 0
-
-	for i := col; i < nCols && i < len(sheet); i++ {
-		length := getColumnLength(sheet, row, i)
-		if length > max {
-			max = length
-		}
-	}
-
-	return max
-}
-
-func getColumnLength(sheet Sheet, row int, col int) int {
+func getLongestColumn(sheet Sheet, row int, col int, nCols int) int {
 	for i := row; i < len(sheet); i++ {
-		if sheet[i][col] == "" {
+		if isRowEmpty(sheet[i][col : col+nCols]) {
 			return i - row
 		}
 	}
 
 	return len(sheet) - row
+}
+
+func isRowEmpty(row []Cell) bool {
+	return Every(row, func(item Cell) bool {
+		return item == ""
+	})
 }
 
 func getSubmatrix[T any](matrix [][]T, startRow int, rowLength int, startCol int, colLength int) [][]T {

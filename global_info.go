@@ -87,7 +87,7 @@ func getGlobalInfo(sheet Sheet, logger Logger) (GlobalInfo, error) {
 	addresses, ok := tables[Addresses]
 
 	if !ok {
-		return GlobalInfo{}, errors.New("address table not found")
+		return GlobalInfo{}, errors.New("addresses table not found")
 	}
 
 	addresses = removeHeaders(addresses)
@@ -137,7 +137,7 @@ func checkAddressTable(addresses map[string]string) error {
 	_, ok := addresses[BackendKey]
 
 	if !ok {
-		return errors.New("address table doesn't exists")
+		return errors.New("backend IP not found")
 	}
 
 	return checkIps(addresses)
@@ -152,7 +152,6 @@ func removeHeaders(table Table) Table {
 }
 
 func checkIps(ips map[string]string) error {
-
 	for _, ipStr := range ips {
 		if !CheckIp(ipStr) {
 			return fmt.Errorf("incorrect IP: %s", ipStr)

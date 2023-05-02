@@ -10,12 +10,12 @@ func EveryMap[K comparable, V any](m map[K]V, predicate func(key K, value V) boo
 	return true
 }
 
-func Every(tests []Test) bool {
+func CheckAll(tests []Test) bool {
+	result := true
+
 	for _, test := range tests {
-		if !test.Run() {
-			return false
-		}
+		result = test.Run() && result
 	}
 
-	return true
+	return result
 }

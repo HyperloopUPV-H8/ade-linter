@@ -10,6 +10,26 @@ func Map[T any, U any](slice []T, mapFn func(T) U) []U {
 	return mappedSlice
 }
 
+func Some[T any](slice []T, predicate func(T) bool) bool {
+	for _, item := range slice {
+		if predicate(item) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func Every[T any](slice []T, predicate func(T) bool) bool {
+	for _, item := range slice {
+		if !predicate(item) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func Reverse[T any](slice []T) []T {
 	newSlice := make([]T, len(slice))
 

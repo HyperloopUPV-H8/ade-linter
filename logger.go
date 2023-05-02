@@ -67,6 +67,7 @@ func (logger Logger) printErr(tag string, err error) {
 	completeMsg := append([]string{msg}, stack...)
 
 	fmt.Println(strings.Join(completeMsg, "\n"))
+	fmt.Print("\n")
 }
 
 func (logger Logger) getStack() []string {

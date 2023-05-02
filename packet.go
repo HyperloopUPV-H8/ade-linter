@@ -7,7 +7,7 @@ import (
 
 func checkPackets(table Table, logger Logger) bool {
 	packets := getPackets(table[1:], logger)
-	return Every(packets)
+	return CheckAll(packets)
 }
 
 func getPackets(table Table, logger Logger) []Test {

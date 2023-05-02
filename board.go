@@ -12,7 +12,7 @@ const (
 )
 
 func checkBoards(sheets map[string]Sheet) bool {
-	return Every(getBoards(sheets))
+	return CheckAll(getBoards(sheets))
 }
 
 func getBoards(sheets map[string]Sheet) []Test {
