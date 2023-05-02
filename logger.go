@@ -9,6 +9,9 @@ import (
 
 type Logger struct {
 	stackEntries []StackEntry
+	errorTag     string
+	warnTag      string
+	passTag      string
 }
 
 type StackEntry struct {
@@ -19,6 +22,9 @@ type StackEntry struct {
 func NewLogger() Logger {
 	return Logger{
 		stackEntries: make([]StackEntry, 0),
+		errorTag:     getErrorTag(),
+		warnTag:      getWarnTag(),
+		passTag:      getPassTag(),
 	}
 }
 
@@ -31,23 +37,34 @@ func (logger Logger) AddEntry(kind string, name string) Logger {
 			kind: kind,
 			name: name,
 		}),
+		errorTag: getErrorTag(),
+		warnTag:  getWarnTag(),
+		passTag:  getPassTag(),
 	}
 }
 
 func (logger Logger) Error(err error) {
-	errorMsg := fmt.Sprintf("%s %s", getErrorTag(), err.Error())
+	logger.printErr(logger.errorTag, err)
+}
+
+func (logger Logger) Warn(err error) {
+	logger.printErr(logger.warnTag, err)
+}
+
+func (logger Logger) Pass(msg string) {
+	passMsg := fmt.Sprintf("%s %s", logger.passTag, msg)
 	stack := logger.getStack()
 
-	completeMsg := append([]string{errorMsg}, stack...)
+	completeMsg := append([]string{passMsg}, stack...)
 
 	fmt.Println(strings.Join(completeMsg, "\n"))
 }
 
-func (logger Logger) Pass(msg string) {
-	passMsg := fmt.Sprintf("%s %s", getPassTag(), msg)
+func (logger Logger) printErr(tag string, err error) {
+	msg := fmt.Sprintf("%s %s", tag, err.Error())
 	stack := logger.getStack()
 
-	completeMsg := append([]string{passMsg}, stack...)
+	completeMsg := append([]string{msg}, stack...)
 
 	fmt.Println(strings.Join(completeMsg, "\n"))
 }
@@ -58,13 +75,17 @@ func (logger Logger) getStack() []string {
 	})
 }
 
+func getErrorTag() string {
+	return getLevelTag("ERROR", color.New(color.FgRed))
+}
+
+func getWarnTag() string {
+	return getLevelTag("WARN", color.New(color.FgYellow))
+}
+
 func getPassTag() string {
 	return getLevelTag("PASS", color.New(color.FgGreen))
 
-}
-
-func getErrorTag() string {
-	return getLevelTag("ERROR", color.New(color.FgRed))
 }
 
 func getLevelTag(level string, tone *color.Color) string {

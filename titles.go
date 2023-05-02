@@ -10,9 +10,9 @@ const (
 	BOARD_PREFIX = "BOARD "
 )
 
-func areTitlesCorrect(doc Document) bool {
+func areTitlesCorrect(doc Document, boardSheets map[string]Sheet) bool {
 	titleLogger := Log.AddEntry("Titles", "")
-	return hasGlobalInfo(doc.Sheets, titleLogger) && haveBoardPrefix(getBoardSheets(doc), titleLogger)
+	return hasGlobalInfo(doc.Sheets, titleLogger) && haveBoardPrefix(boardSheets, titleLogger)
 }
 
 func hasGlobalInfo(sheets map[string]Sheet, logger Logger) bool {

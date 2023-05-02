@@ -3,6 +3,7 @@ package ade_linter
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -11,19 +12,40 @@ var Log = NewLogger()
 
 func Lint(file *excelize.File) bool {
 	fmt.Println("🧼 Cleaning ADE...")
-
 	doc := getDocument(file)
-	if areTitlesCorrect(doc) && checkGlobalInfo(doc.Sheets[GLOBAL_INFO]) && checkBoards(getBoardSheets(doc)) {
-		Log.Pass("ADE has been validated")
-		return true
+
+	boardSheets := getBoardSheets(doc)
+
+	if !areTitlesCorrect(doc, boardSheets) {
+		return false
 	}
 
-	return false
+	if !checkGlobalInfo(doc.Sheets[GLOBAL_INFO]) {
+		return false
+	}
+
+	if !checkBoards(boardSheets) {
+		return false
+	}
+
+	Log.Pass("ADE has been validated")
+	return true
 }
 
 func getBoardSheets(doc Document) map[string]Sheet {
-	boards := NewMap(doc.Sheets)
-	delete(boards, GLOBAL_INFO)
+	boards := make(map[string]Sheet)
+
+	for name, sheet := range doc.Sheets {
+		if !strings.HasPrefix(name, BOARD_PREFIX) {
+			if name != GLOBAL_INFO {
+				Log.Warn(fmt.Errorf("sheet name %s doesn't have board prefix %s", name, BOARD_PREFIX))
+			}
+			continue
+		}
+
+		boards[name] = sheet
+	}
+
 	return boards
 }
 
