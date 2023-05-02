@@ -1,6 +1,7 @@
 package ade_linter
 
 import (
+	"errors"
 	"fmt"
 
 	"golang.org/x/exp/slices"
@@ -29,15 +30,28 @@ func getStructures(tableColumns Table, logger Logger) []Structure {
 	structures := make([]Structure, 0)
 
 	for _, column := range tableColumns {
-		structures = append(structures,
-			Structure{
-				column: column,
-				logger: logger.AddEntry("Structure", column[1]),
-			},
-		)
+		structure, err := getStructure(column, logger)
+
+		if err != nil {
+			logger.Error(err)
+			continue
+		}
+
+		structures = append(structures, structure)
 	}
 
 	return structures
+}
+
+func getStructure(column []string, logger Logger) (Structure, error) {
+	if len(column) == 0 {
+		return Structure{}, errors.New("structure column is empty")
+	}
+
+	return Structure{
+		column: column,
+		logger: logger.AddEntry("Structure", column[0]),
+	}, nil
 }
 
 func checkStructure(structure Structure, packets []string, measurements []string) bool {

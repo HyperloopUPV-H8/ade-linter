@@ -1,8 +1,8 @@
 package ade_linter
 
 import (
-	"errors"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -20,7 +20,8 @@ func getBoards(sheets map[string]Sheet) []Test {
 
 	i := 0
 	for name, sheet := range sheets {
-		boardLogger := Log.AddEntry("Board", name)
+		boardName := strings.TrimPrefix(name, BOARD_PREFIX)
+		boardLogger := Log.AddEntry("Board", boardName)
 		board, err := getBoard(sheet, boardLogger)
 
 		if err != nil {
@@ -57,31 +58,27 @@ func (board Board) Run() bool {
 }
 
 func getBoard(sheet Sheet, logger Logger) (Board, error) {
-	tables := getTables(sheet)
+	packets, err := getTable(PacketTable, sheet, []string{
+		"ID",
+		"Name",
+		"Type",
+	})
 
-	packets, ok := tables[PacketTable]
-
-	if !ok {
-		logger.Error(fmt.Errorf("packet table not found"))
-		return Board{}, errors.New("packet table not found")
+	if err != nil {
+		return Board{}, err
 	}
 
-	packets = packets[1:]
+	measurements, err := getTable(MeasurementTable, sheet, []string{"ID", "Name", "Type", "PodUnits", "DisplayUnits", "SafeRange", "WarningRange"})
 
-	measurements, ok := tables[MeasurementTable]
-
-	if !ok {
-		logger.Error(fmt.Errorf("measurement table not found"))
-		return Board{}, errors.New("measurements table not found")
+	if err != nil {
+		return Board{}, err
 	}
 
-	measurements = measurements[1:]
+	structures, err := findTableAutoWidth(sheet, Structures)
 
-	structures, ok := tables[Structures]
-
-	if !ok {
-		logger.Error(fmt.Errorf("structures table not found"))
-		return Board{}, errors.New("structures table not found")
+	if err != nil {
+		logger.Error(err)
+		return Board{}, err
 	}
 
 	structures = getStructureColumns(structures)
@@ -92,6 +89,42 @@ func getBoard(sheet Sheet, logger Logger) (Board, error) {
 		Structures:   structures,
 		logger:       logger,
 	}, nil
+}
+
+func getTable(name string, sheet Sheet, headers []string) (Table, error) {
+	table, ok := findTableWithWidth(sheet, name, len(headers))
+
+	if !ok {
+		return Table{}, fmt.Errorf("table %s not found", name)
+	}
+
+	if len(table) == 0 {
+		return Table{}, fmt.Errorf("table %s is empty (not even headers)", name)
+	}
+
+	if !areHeadersCorrect(table[0], headers) {
+		return Table{}, fmt.Errorf("incorrect headers: %v", table[0])
+	}
+
+	if len(table) == 1 {
+		return Table{}, fmt.Errorf("table %s has no fields", name)
+	}
+
+	return table[1:], nil
+}
+
+func areHeadersCorrect(headerRow []string, headers []string) bool {
+	if len(headerRow) != len(headers) {
+		return false
+	}
+
+	for index, header := range headers {
+		if !(header == headerRow[index]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func getPacketNames(packets Table) []string {

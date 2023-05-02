@@ -56,11 +56,13 @@ func TestMeasurement(t *testing.T) {
 			{"[-10, -10]", true},
 			{"[,]", false},
 			{"[]", false},
+			{"10,10]", false},
+			{"[10,10", false},
+			{"1010", false},
 		}
 
 		AssertMocks(rangeMocks, ade_linter.CheckRange, func(mock MockTest[string, bool], got bool) {
 			t.Errorf("%s was incorrectly marked as %t", mock.Prompt, got)
-
 		})
 	})
 }

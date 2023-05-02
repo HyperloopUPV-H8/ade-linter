@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-const (
-	FloatExp = `-?\d+(?:\.\d+)?`
+var (
+	RangeExp = regexp.MustCompile(fmt.Sprintf(`^\[(?:(?:%s,%s)|(?:,%s)|(?:%s,))\]$`, FloatExp, FloatExp, FloatExp, FloatExp))
 )
 
 func checkMeasurements(table Table, logger Logger) bool {
@@ -92,9 +92,5 @@ func CheckRange(rangeStr string) bool {
 		return true
 	}
 
-	rangeContentExp := regexp.MustCompile(fmt.Sprintf(`^(?:(?:%s,%s)|(?:%s,)|(?:,%s))$`, FloatExp, FloatExp, FloatExp, FloatExp))
-	rangeContent := strings.TrimPrefix(rangeStr, "[")
-	rangeContent = strings.TrimSuffix(rangeContent, "]")
-	rangeContent = strings.ReplaceAll(rangeContent, " ", "")
-	return rangeContentExp.MatchString(rangeContent)
+	return RangeExp.MatchString(strings.ReplaceAll(rangeStr, " ", ""))
 }

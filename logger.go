@@ -23,7 +23,7 @@ func NewLogger() Logger {
 }
 
 func (logger Logger) AddEntry(kind string, name string) Logger {
-	newStackEntries := make([]StackEntry, 0)
+	newStackEntries := make([]StackEntry, len(logger.stackEntries))
 	copy(newStackEntries, logger.stackEntries)
 
 	return Logger{
@@ -35,7 +35,7 @@ func (logger Logger) AddEntry(kind string, name string) Logger {
 }
 
 func (logger Logger) Error(err error) {
-	errorMsg := fmt.Sprint(getErrorTag(), "\t\t", err.Error())
+	errorMsg := fmt.Sprintf("%s %s", getErrorTag(), err.Error())
 	stack := logger.getStack()
 
 	completeMsg := append([]string{errorMsg}, stack...)
@@ -43,10 +43,24 @@ func (logger Logger) Error(err error) {
 	fmt.Println(strings.Join(completeMsg, "\n"))
 }
 
+func (logger Logger) Pass(msg string) {
+	passMsg := fmt.Sprintf("%s %s", getPassTag(), msg)
+	stack := logger.getStack()
+
+	completeMsg := append([]string{passMsg}, stack...)
+
+	fmt.Println(strings.Join(completeMsg, "\n"))
+}
+
 func (logger Logger) getStack() []string {
-	return Map(logger.stackEntries, func(item StackEntry) string {
-		return fmt.Sprint(color.YellowString("@", item.kind), "\t\t", item.name)
+	return Map(Reverse(logger.stackEntries), func(item StackEntry) string {
+		return fmt.Sprintf("%s %s", color.HiMagentaString(fmt.Sprint("@", item.kind)), item.name)
 	})
+}
+
+func getPassTag() string {
+	return getLevelTag("PASS", color.New(color.FgGreen))
+
 }
 
 func getErrorTag() string {

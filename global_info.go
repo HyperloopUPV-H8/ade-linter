@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 )
 
 const (
@@ -15,42 +16,54 @@ const (
 	BackendKey = "Backend"
 )
 
+var (
+	UnitExp = regexp.MustCompile(fmt.Sprintf(`^(?:[/+*\-]%s+)+$`, FloatExp))
+	IpExp   = regexp.MustCompile(`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`)
+	IdExp   = regexp.MustCompile(`^\d+$`)
+)
+
 func checkGlobalInfo(sheet Sheet) bool {
 	globalLogger := Log.AddEntry("GlobalInfo", "")
-	globalInfo, err := getGlobalInfo(sheet)
+	globalInfo, err := getGlobalInfo(sheet, globalLogger)
 
 	if err != nil {
 		globalLogger.Error(err)
+		return false
 	}
 
 	err = checkAddressTable(globalInfo.Addresses)
 
 	if err != nil {
 		globalLogger.Error(err)
+		return false
 	}
 
 	err = checkUnits(globalInfo.Units)
 
 	if err != nil {
 		globalLogger.Error(err)
+		return false
 	}
 
 	err = checkPorts(globalInfo.Ports)
 
 	if err != nil {
 		globalLogger.Error(err)
+		return false
 	}
 
-	err = checkBoardIds(globalInfo.BoardIds, globalInfo.Addresses)
+	err = CheckBoardIds(globalInfo.BoardIds, globalInfo.Addresses)
 
 	if err != nil {
 		globalLogger.Error(err)
+		return false
 	}
 
 	err = checkMessageIds(globalInfo.MessageIds)
 
 	if err != nil {
 		globalLogger.Error(err)
+		return false
 	}
 
 	return true
@@ -64,8 +77,13 @@ type GlobalInfo struct {
 	MessageIds map[string]string
 }
 
-func getGlobalInfo(sheet Sheet) (GlobalInfo, error) {
-	tables := getTables(sheet)
+func getGlobalInfo(sheet Sheet, logger Logger) (GlobalInfo, error) {
+	tables, err := getTables(sheet)
+
+	if err != nil {
+		return GlobalInfo{}, err
+	}
+
 	addresses, ok := tables[Addresses]
 
 	if !ok {
@@ -116,10 +134,9 @@ func checkAddressTable(addresses map[string]string) error {
 }
 
 func checkIps(ips map[string]string) error {
-	ipExp := regexp.MustCompile(`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`)
 
 	for _, ipStr := range ips {
-		if !ipExp.MatchString(ipStr) {
+		if !CheckIp(ipStr) {
 			return fmt.Errorf("incorrect IP: %s", ipStr)
 		}
 	}
@@ -127,15 +144,13 @@ func checkIps(ips map[string]string) error {
 	return nil
 }
 
+func CheckIp(ipStr string) bool {
+	return IpExp.MatchString(ipStr)
+}
+
 func checkUnits(units map[string]string) error {
-	unitExp := regexp.MustCompile(`^(?:[/+*-]\d+)$`)
-
 	for _, unitStr := range units {
-		if unitStr == "" {
-			return nil
-		}
-
-		if !unitExp.MatchString(unitStr) {
+		if !CheckUnit(unitStr) {
 			return fmt.Errorf("incorrect units: %s", unitStr)
 		}
 	}
@@ -143,11 +158,17 @@ func checkUnits(units map[string]string) error {
 	return nil
 }
 
-func checkPorts(ports map[string]string) error {
-	portExp := regexp.MustCompile(`^\d{1,5}$`)
+func CheckUnit(unitStr string) bool {
+	if unitStr == "" {
+		return true
+	}
 
+	return UnitExp.MatchString(unitStr)
+}
+
+func checkPorts(ports map[string]string) error {
 	for _, portStr := range ports {
-		if !portExp.MatchString(portStr) {
+		if !CheckPort(portStr) {
 			return fmt.Errorf("incorrect port: %s", portStr)
 		}
 	}
@@ -155,34 +176,47 @@ func checkPorts(ports map[string]string) error {
 	return nil
 }
 
-func checkBoardIds(boardIds map[string]string, addresses map[string]string) error {
-	idExp := regexp.MustCompile(`^\d+$`)
+func CheckPort(portStr string) bool {
+	_, err := strconv.ParseUint(portStr, 10, 16)
+	return err == nil
+}
 
+func CheckBoardIds(boardIds map[string]string, addresses map[string]string) error {
 	for board, idStr := range boardIds {
-		_, ok := addresses[board]
-
-		if !ok {
-			return fmt.Errorf("%s IP missing in address table", board)
-		}
-
-		if !idExp.MatchString(idStr) {
-			return fmt.Errorf("incorrect board id: %s - %s", board, idStr)
+		if err := checkBoardId(board, idStr, addresses); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func checkMessageIds(messageIds map[string]string) error {
-	idExp := regexp.MustCompile(`^\d+$`)
+func checkBoardId(name string, id string, addresses map[string]string) error {
+	if !IdExp.MatchString(id) {
+		return fmt.Errorf("incorrect board id: %s - %s", name, id)
+	}
 
+	_, ok := addresses[name]
+
+	if !ok {
+		return fmt.Errorf("%s IP missing in address table", name)
+	}
+
+	return nil
+}
+
+func checkMessageIds(messageIds map[string]string) error {
 	for _, idStr := range messageIds {
-		if !idExp.MatchString(idStr) {
+		if !CheckMessageId(idStr) {
 			return fmt.Errorf("incorrect message id: %s", idStr)
 		}
 	}
 
 	return nil
+}
+
+func CheckMessageId(id string) bool {
+	return IdExp.MatchString(id)
 }
 
 func tableToMap(table [][]Cell) map[string]string {

@@ -15,6 +15,7 @@ func TestPacket(t *testing.T) {
 			{"65536", false},
 			{"-1", false},
 			{"-0", false},
+			{"", false},
 		}
 
 		AssertMocks(mockIds, ade_linter.CheckId, func(mock MockTest[string, bool], got bool) {

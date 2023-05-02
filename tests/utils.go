@@ -13,3 +13,12 @@ func AssertMocks[T any](mocks []MockTest[T, bool], predicate func(item T) bool, 
 		}
 	}
 }
+
+func AssertNoErrors[T any](mocks []MockTest[T, bool], predicate func(item T) error, errorFn func(mock MockTest[T, bool], got error)) {
+	for _, mock := range mocks {
+		got := predicate(mock.Prompt)
+		if got != nil {
+			errorFn(mock, got)
+		}
+	}
+}
