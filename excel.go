@@ -14,10 +14,10 @@ func getTables(sheet Sheet) (Tables, error) {
 		for j, cell := range row {
 			if strings.HasPrefix(cell, TablePrefix) {
 				name := strings.TrimPrefix(cell, fmt.Sprintf("%s ", TablePrefix))
-				table, err := getTableAutomaticWidth(sheet, i, j)
+				table, err := getTableAutoSize(sheet, i, j)
 
 				if err != nil {
-					return map[string]Table{}, err
+					return map[string][][]string{}, nil
 				}
 
 				tables[name] = table
@@ -28,7 +28,7 @@ func getTables(sheet Sheet) (Tables, error) {
 	return tables, nil
 }
 
-func findTableWithWidth(sheet Sheet, name string, width int) (Table, bool) {
+func findTable(sheet Sheet, name string, width int) (Table, bool) {
 	row, col := findTableHeader(sheet, name)
 
 	if row == -1 || col == -1 {
@@ -42,14 +42,14 @@ func findTableWithWidth(sheet Sheet, name string, width int) (Table, bool) {
 	return getTableWithWidth(sheet, row+1, col, width), true
 }
 
-func findTableAutoWidth(sheet Sheet, name string) (Table, error) {
+func findTableAutoSize(sheet Sheet, name string) (Table, error) {
 	row, col := findTableHeader(sheet, name)
 
 	if row == -1 || col == -1 {
 		return [][]string{}, fmt.Errorf("table %s not found", name)
 	}
 
-	table, err := getTableAutomaticWidth(sheet, row, col)
+	table, err := getTableAutoSize(sheet, row, col)
 
 	if err != nil {
 		return [][]string{}, err
@@ -71,46 +71,46 @@ func findTableHeader(sheet Sheet, name string) (int, int) { // returns row, col
 }
 
 func getTableWithWidth(sheet Sheet, row int, col int, width int) Table {
-	submatrix := make([][]string, 0)
-
-	for i := row; i < len(sheet) && !isRowEmpty(sheet[i][col:col+width]); i++ {
-		submatrix = append(submatrix, sheet[i][col:col+width])
-	}
-
-	return submatrix
+	colLength := getLongestColumnLength(sheet, row, col, width)
+	return getSubmatrix(sheet, row, width, col, colLength)
 }
 
-func getTableAutomaticWidth(sheet Sheet, row int, column int) ([][]Cell, error) {
+func getTableAutoSize(sheet Sheet, row int, column int) ([][]Cell, error) {
 	if row == len(sheet)-1 {
 		return [][]Cell{}, fmt.Errorf("table header is in the last row")
 	}
 
-	rowLength := getRowLength(sheet[row+1], column)
-	columnLength := getColumnLength(sheet, row+1, column)
+	rowLength := getRowLength(sheet[row+1][column:])
+	columnLength := getLongestColumnLength(sheet, row+1, column, rowLength)
 
-	return getSubMatrix(sheet, row+1, rowLength, column, columnLength), nil
+	return getSubmatrix(sheet, row+1, rowLength, column, columnLength), nil
 }
 
-func getRowLength(row []Cell, start int) int {
-	for i := start; i < len(row); i++ {
-		if isRowEmpty(row) {
-			return i - start
+func getRowLength(row []Cell) int {
+	if len(row) == 0 {
+		return 0
+	}
+
+	for i, cell := range row {
+		if cell == "" {
+			return i
 		}
 	}
 
-	return len(row) - start
+	return len(row)
 }
 
-func isRowEmpty(row []string) bool {
-	empty := true
+func getLongestColumnLength(sheet Sheet, row int, col int, nCols int) int {
+	max := 0
 
-	for _, cell := range row {
-		if cell != "" {
-			empty = false
+	for i := col; i < nCols && i < len(sheet); i++ {
+		length := getColumnLength(sheet, row, i)
+		if length > max {
+			max = length
 		}
 	}
 
-	return empty
+	return max
 }
 
 func getColumnLength(sheet Sheet, row int, col int) int {
@@ -123,7 +123,7 @@ func getColumnLength(sheet Sheet, row int, col int) int {
 	return len(sheet) - row
 }
 
-func getSubMatrix[T any](matrix [][]T, startRow int, rowLength int, startCol int, colLength int) [][]T {
+func getSubmatrix[T any](matrix [][]T, startRow int, rowLength int, startCol int, colLength int) [][]T {
 	rows := matrix[startRow : startRow+colLength]
 
 	submatrix := make([][]T, len(rows))

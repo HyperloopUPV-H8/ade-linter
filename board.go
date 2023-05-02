@@ -74,7 +74,7 @@ func getBoard(sheet Sheet, logger Logger) (Board, error) {
 		return Board{}, err
 	}
 
-	structures, err := findTableAutoWidth(sheet, Structures)
+	structures, err := findTableAutoSize(sheet, Structures)
 
 	if err != nil {
 		logger.Error(err)
@@ -92,7 +92,7 @@ func getBoard(sheet Sheet, logger Logger) (Board, error) {
 }
 
 func getTable(name string, sheet Sheet, headers []string) (Table, error) {
-	table, ok := findTableWithWidth(sheet, name, len(headers))
+	table, ok := findTable(sheet, name, len(headers))
 
 	if !ok {
 		return Table{}, fmt.Errorf("table %s not found", name)

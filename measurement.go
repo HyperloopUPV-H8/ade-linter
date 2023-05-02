@@ -30,6 +30,17 @@ type Measurement struct {
 }
 
 func (m Measurement) Run() bool {
+
+	if m.cells[0] == "" {
+		m.logger.Error(fmt.Errorf("empty id"))
+		return false
+	}
+
+	if m.cells[1] == "" {
+		m.logger.Error(fmt.Errorf("empty name"))
+		return false
+	}
+
 	if !checkMeasurementType(m.cells[2]) {
 		m.logger.Error(fmt.Errorf("invalid type: %s", m.cells[2]))
 		return false

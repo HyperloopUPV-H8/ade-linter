@@ -90,11 +90,15 @@ func getGlobalInfo(sheet Sheet, logger Logger) (GlobalInfo, error) {
 		return GlobalInfo{}, errors.New("address table not found")
 	}
 
+	addresses = removeHeaders(addresses)
+
 	units, ok := tables[Units]
 
 	if !ok {
 		return GlobalInfo{}, errors.New("units table not found")
 	}
+
+	units = removeHeaders(units)
 
 	ports, ok := tables[Ports]
 
@@ -102,11 +106,15 @@ func getGlobalInfo(sheet Sheet, logger Logger) (GlobalInfo, error) {
 		return GlobalInfo{}, errors.New("ports table not found")
 	}
 
+	ports = removeHeaders(ports)
+
 	boardIds, ok := tables[BoardIds]
 
 	if !ok {
 		return GlobalInfo{}, errors.New("boardIds table not found")
 	}
+
+	boardIds = removeHeaders(boardIds)
 
 	messageIds, ok := tables[MessageIds]
 
@@ -114,12 +122,14 @@ func getGlobalInfo(sheet Sheet, logger Logger) (GlobalInfo, error) {
 		return GlobalInfo{}, errors.New("messageIds table not found")
 	}
 
+	messageIds = removeHeaders(messageIds)
+
 	return GlobalInfo{
-		Addresses:  tableToMap(addresses[1:]),
-		Units:      tableToMap(units[1:]),
-		Ports:      tableToMap(ports[1:]),
-		BoardIds:   tableToMap(boardIds[1:]),
-		MessageIds: tableToMap(messageIds[1:]),
+		Addresses:  tableToMap(addresses),
+		Units:      tableToMap(units),
+		Ports:      tableToMap(ports),
+		BoardIds:   tableToMap(boardIds),
+		MessageIds: tableToMap(messageIds),
 	}, nil
 }
 
@@ -131,6 +141,14 @@ func checkAddressTable(addresses map[string]string) error {
 	}
 
 	return checkIps(addresses)
+}
+
+func removeHeaders(table Table) Table {
+	if len(table) == 0 {
+		return table
+	}
+
+	return table[1:]
 }
 
 func checkIps(ips map[string]string) error {

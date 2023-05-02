@@ -60,10 +60,13 @@ func checkStructure(structure Structure, packets []string, measurements []string
 		return false
 	}
 
-	err := areMeasurementsDefined(structure.column[1:], measurements)
+	if len(structure.column) > 1 {
+		err := areMeasurementsDefined(structure.column[1:], measurements)
 
-	if err != nil {
-		structure.logger.Error(err)
+		if err != nil {
+			structure.logger.Error(err)
+			return false
+		}
 	}
 
 	return true
