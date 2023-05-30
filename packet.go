@@ -45,5 +45,5 @@ func CheckId(id string) bool {
 }
 
 func CheckPacketType(kind string) bool {
-	return kind == "data" || kind == "order" || kind == "warning" || kind == "fault"
+	return kind == "data" || kind == "order" || kind == "stateOrder"
 }
